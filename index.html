@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="寶寶日記">
+<meta name="theme-color" content="#fbf7f2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1b1917" media="(prefers-color-scheme: dark)">
+<title>寶寶日記</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Huninn&display=swap">
+<link rel="stylesheet" href="app.css?v=1">
+</head>
+<body>
+<header class="top">
+  <div class="avatar" aria-hidden="true"><svg viewBox="0 0 100 100"><circle cx="50" cy="56" r="34" fill="#ffd9c4"/><circle cx="17" cy="56" r="7" fill="#ffd0b8"/><circle cx="83" cy="56" r="7" fill="#ffd0b8"/><path d="M46 22c-2-8 6-12 10-8-4 0-6 3-4 7" fill="none" stroke="#a7745e" stroke-width="3.5" stroke-linecap="round"/><path d="M34 54q5-5 10 0M56 54q5-5 10 0" fill="none" stroke="#5a463d" stroke-width="3" stroke-linecap="round"/><ellipse cx="31" cy="64" rx="6" ry="4" fill="#f7a99a" opacity=".7"/><ellipse cx="69" cy="64" rx="6" ry="4" fill="#f7a99a" opacity=".7"/><path d="M44 68q6 6 12 0" fill="none" stroke="#5a463d" stroke-width="3" stroke-linecap="round"/></svg></div>
+  <div class="baby">
+    <div class="baby-name" id="babyName">寶寶日記</div>
+    <div class="baby-age" id="babyAge"></div>
+  </div>
+  <button class="sync" id="syncBtn" aria-label="重新整理"><span id="syncText">—</span></button>
+</header>
+
+<main id="view"></main>
+
+<nav class="tabs" id="tabs">
+  <button data-tab="today" class="on"><span class="ti">🏠</span>今天</button>
+  <button data-tab="log"><span class="ti">📋</span>紀錄</button>
+  <button data-tab="charts"><span class="ti">📈</span>圖表</button>
+  <button data-tab="settings"><span class="ti">⚙️</span>設定</button>
+</nav>
+
+<div class="sheet-bg" id="sheetBg" hidden></div>
+<section class="sheet" id="sheet" hidden aria-modal="true" role="dialog"></section>
+<div class="toast" id="toast" hidden></div>
+<div class="tip" id="tip" hidden></div>
+
+<script src="app.js?v=1"></script>
+</body>
+</html>

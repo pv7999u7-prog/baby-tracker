@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>寶寶日記設定教學</title>
+<link rel="icon" href="icon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Huninn&display=swap">
+<link rel="stylesheet" href="app.css?v=1">
+<style>
+  body { padding-bottom: 40px; }
+  main { padding-top: 10px; }
+  .step { margin-top: 16px; }
+  .step h3 { margin: 0 0 8px; font-size: 18px; display: flex; gap: 10px; align-items: center; }
+  .step h3 .n { width: 32px; height: 32px; flex: none; border-radius: 50%; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; font-size: 16px; }
+  .step ol, .step ul { margin: 6px 0 0; padding-left: 22px; }
+  .step li { margin: 5px 0; }
+  .step p { margin: 6px 0; }
+  .where { display: inline-block; font-size: 12px; padding: 1px 9px; border-radius: 999px; background: var(--milk-bg); color: var(--ink-2); margin-left: 6px; font-weight: 400; }
+  code, .k { background: var(--card-2); border-radius: 6px; padding: 1px 6px; font-family: ui-monospace, Menlo, monospace; font-size: 14px; }
+  .k { font-family: inherit; font-weight: 700; }
+  .note { font-size: 14px; color: var(--ink-2); background: var(--poop-bg); border-radius: 14px; padding: 9px 12px; margin-top: 10px; }
+  .act { margin: 8px 0; padding: 10px 12px; border-radius: 16px; background: var(--card-2); }
+  .act b { display: block; }
+  .act .sm { font-size: 14px; color: var(--ink-2); }
+  table.say-t { width: 100%; border-collapse: collapse; font-size: 15px; }
+  table.say-t td { padding: 7px 4px; border-bottom: 2px dotted var(--line); vertical-align: top; }
+  table.say-t td:first-child { white-space: nowrap; font-weight: 700; padding-right: 10px; }
+  .copy { margin-top: 10px; }
+  .back { display: inline-block; margin: 4px 0 0; color: var(--accent); text-decoration: none; font-weight: 700; }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="avatar" aria-hidden="true"><img src="icon-180.png" alt="" style="width:100%;height:100%"></div>
+  <div class="baby"><div class="baby-name">設定教學</div><div class="baby-age" style="padding:0">大約 10 分鐘，只要做一次</div></div>
+</header>
+<main>
+  <a class="back" href="./">‹ 回到寶寶日記</a>
+
+  <div class="card step">
+    <p>寶寶日記的資料會存在<b>你自己的 Google 試算表</b>，不會經過別人。做完下面 6 步，就可以用 Siri 說「寶寶紀錄」來記錄，打開 App 也能看到圖表。</p>
+    <div class="note">💻 第 1～4 步要貼程式，<b>用電腦做最快</b>。第 5、6 步用 iPhone 做。</div>
+  </div>
+
+  <div class="card step">
+    <h3><span class="n">1</span>建立試算表 <span class="where">電腦</span></h3>
+    <ol>
+      <li>用自己的 Google 帳號打開 <a href="https://sheets.new" target="_blank" rel="noopener">sheets.new</a>，會開一份新的試算表</li>
+      <li>左上角把名稱改成「寶寶日記」</li>
+    </ol>
+  </div>
+
+  <div class="card step">
+    <h3><span class="n">2</span>貼上程式 <span class="where">電腦</span></h3>
+    <ol>
+      <li>上方選單：<span class="k">擴充功能</span> → <span class="k">Apps Script</span></li>
+      <li>把編輯區原本的幾行全部刪掉</li>
+      <li>按下面的按鈕複製程式，貼進編輯區
+        <div class="btns copy"><button class="btn" id="copyBtn">📋 複製程式碼</button></div>
+        <div class="say-hint" style="text-align:center">或<a href="apps-script/Code.gs" target="_blank" style="color:var(--accent)">直接打開程式碼</a>全選複製</div>
+      </li>
+      <li><b>改密碼</b>：第一個 <code>const KEY = '請改成你的密碼';</code> 把引號裡的字改成你自己的密碼（英文或數字，例如 <code>bb2026xyz</code>）</li>
+      <li>按 💾 儲存</li>
+    </ol>
+  </div>
+
+  <div class="card step">
+    <h3><span class="n">3</span>第一次執行（授權） <span class="where">電腦</span></h3>
+    <ol>
+      <li>上方工具列函式選單選 <span class="k">setup</span>，按 <span class="k">▷ 執行</span></li>
+      <li>跳出「需要授權」→ 選自己的帳號</li>
+      <li>如果看到「Google 尚未驗證這個應用程式」：按 <span class="k">進階</span> → <span class="k">前往「未命名的專案」（不安全）</span> → <span class="k">允許</span>
+        <div class="note">這是你自己剛貼的程式，只會讀寫這一份試算表，所以可以放心允許。</div></li>
+      <li>回到試算表，會多出「紀錄」和「設定」兩個分頁</li>
+    </ol>
+  </div>
+
+  <div class="card step">
+    <h3><span class="n">4</span>部署成網址 <span class="where">電腦</span></h3>
+    <ol>
+      <li>Apps Script 右上角 <span class="k">部署</span> → <span class="k">新增部署作業</span></li>
+      <li>點「選取類型」旁的 ⚙️ → <span class="k">網頁應用程式</span></li>
+      <li>執行身分：<span class="k">我</span>；誰可以存取：<span class="k">所有人</span></li>
+      <li>按 <span class="k">部署</span>，複製「網頁應用程式網址」（<code>https://script.google.com/macros/s/…/exec</code>）</li>
+      <li>把<b>網址和密碼</b>傳到自己的 iPhone（例如用 LINE 傳給自己）</li>
+    </ol>
+    <div class="note">之後如果程式有更新：<span class="k">部署</span> → <span class="k">管理部署作業</span> → ✏️ → 版本選「新版本」→ 部署。這樣網址不會變。</div>
+  </div>
+
+  <div class="card step">
+    <h3><span class="n">5</span>把 App 加到主畫面 <span class="where">iPhone</span></h3>
+    <ol>
+      <li>用 <b>Safari</b> 打開寶寶日記網址</li>
+      <li>下方 <span class="k">分享</span> 按鈕 → <span class="k">加入主畫面</span></li>
+      <li>從主畫面打開 → <span class="k">設定</span> → 貼上網址和密碼 → 選「我是媽媽／爸爸」→ <span class="k">儲存並測試連線</span></li>
+      <li>在設定頁填寶寶名字和生日，兩支手機都會看到</li>
+    </ol>
+    <div class="note">👨‍👩‍👧 另一半的手機：一樣做第 5、6 步，填<b>同一組網址和密碼</b>就好，兩個人的紀錄會在一起。</div>
+  </div>
+
+  <div class="card step">
+    <h3><span class="n">6</span>做 Siri 捷徑 <span class="where">iPhone</span></h3>
+    <p>打開「<b>捷徑</b>」App → 右上 <span class="k">＋</span> → 最上面名稱改成 <span class="k">寶寶紀錄</span>，依序加入 3 個動作：</p>
+    <div class="act"><b>① 聽寫文字</b><span class="sm">搜尋「聽寫」。點開箭頭：語言選「中文（台灣）」，停止聆聽選「暫停後」。</span></div>
+    <div class="act"><b>② 取得 URL 內容</b><span class="sm">
+      URL：貼上第 4 步的網址<br>
+      點開箭頭 → 方法：<span class="k">POST</span>；要求本文：<span class="k">JSON</span>，新增 3 個欄位（都選「文字」）：<br>
+      ・<code>key</code> → 你的密碼<br>
+      ・<code>text</code> → 點一下，選上面的變數「<b>聽寫的文字</b>」<br>
+      ・<code>plain</code> → <code>1</code><br>
+      （想知道誰記的，可再加 <code>by</code> → 媽媽）</span></div>
+    <div class="act"><b>③ 說出文字</b><span class="sm">搜尋「說出」，內容選上一步的「URL 的內容」。</span></div>
+    <p>完成！對 iPhone 說：<b>「嘿 Siri，寶寶紀錄」</b>，聽到「嗶」之後說「喝奶一百二」，Siri 會回答「已記錄喝奶 120cc。今天第 5 次，共 600cc…」。</p>
+    <div class="note">⚡ 想更快：複製這個捷徑，把 ① 換成「文字」動作直接寫「尿布」，名稱改成「換尿布」。之後說「嘿 Siri，換尿布」一句就記好。「寶寶睡了」（文字：睡覺）、「寶寶醒了」（文字：起床）也很好用。<br>
+    📤 要給另一半：在捷徑上長按 → 分享 → 用 LINE 傳過去，對方再把 <code>by</code> 改成自己。</div>
+  </div>
+
+  <div class="card step">
+    <h3><span class="n">💬</span>可以這樣跟 Siri 說</h3>
+    <table class="say-t">
+      <tr><td>🍼 喝奶</td><td>喝奶一百二、母奶九十、配方奶一百五十 cc</td></tr>
+      <tr><td>🤱 親餵</td><td>親餵左邊十五分鐘右邊十分鐘</td></tr>
+      <tr><td>💧 尿布</td><td>換尿布、尿尿、尿布很濕</td></tr>
+      <tr><td>💩 大便</td><td>大便、大便黃色軟、換尿布有大便</td></tr>
+      <tr><td>😴 睡覺</td><td>睡著了 → 醒來說「起床」，Siri 會算睡多久；或「睡了兩小時」</td></tr>
+      <tr><td>🌡️ 體溫</td><td>體溫三十七點五、耳溫三十八點二</td></tr>
+      <tr><td>⚖️ 成長</td><td>體重五點二公斤、身高六十公分、頭圍三十八</td></tr>
+      <tr><td>💊 其他</td><td>吃藥 益生菌、吐奶一點點、洗澡、副食品 米糊三十克、打疫苗 五合一</td></tr>
+      <tr><td>⏰ 補記</td><td>十分鐘前喝奶一百、下午三點大便、凌晨兩點半喝奶一百二</td></tr>
+      <tr><td>❓ 問問題</td><td>上次喝奶、上次大便什麼時候、今天狀況、睡多久了</td></tr>
+      <tr><td>↩️ 說錯了</td><td>取消、刪除上一筆</td></tr>
+    </table>
+    <div class="note">聽不懂的話會先存成「備註」，之後在 App 裡點那一筆就能修改。</div>
+  </div>
+</main>
+<div class="toast" id="toast" hidden></div>
+<script>
+document.getElementById('copyBtn').addEventListener('click', async () => {
+  const t = document.getElementById('toast');
+  const show = m => { t.textContent = m; t.hidden = false; setTimeout(() => { t.hidden = true; }, 2500); };
+  try {
+    const src = await (await fetch('apps-script/Code.gs?v=1')).text();
+    const out = src.replace(/\nif \(typeof module[^\n]*\n?$/, '\n');
+    await navigator.clipboard.writeText(out);
+    show('✓ 已複製，貼到 Apps Script 吧');
+  } catch (e) { show('複製失敗，請改用「直接打開程式碼」'); }
+});
+</script>
+</body>
+</html>
