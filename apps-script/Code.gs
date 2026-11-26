@@ -8,14 +8,16 @@
  *   4. 部署 → 新增部署作業 → 類型「網頁應用程式」
  *      執行身分：我　｜　誰可以存取：任何人 → 部署，複製網址
  *
- * 資料全部存在這份試算表的「紀錄」「設定」分頁，不會傳到別的地方。
+ * 資料全部存在這份試算表的「紀錄」「設定」「自訂說法」分頁，不會傳到別的地方。
  */
 const KEY = '請改成你的密碼';
-const VERSION = 1;
+const VERSION = 2;
 
 const SHEET = '紀錄';
 const HEAD = ['id', '時間', '類別', '數值', '單位', '細節', '原始文字', '記錄者', '寫入時間', '結束時間'];
 const SET_SHEET = '設定';
+const CUSTOM_SHEET = '自訂說法';
+const CUSTOM_HEAD = ['說法', '記成', '數值', '細節'];
 
 /* ───────────── 入口 ───────────── */
 
@@ -51,11 +53,12 @@ function handle_(b) {
 function route_(b) {
   const a = b.action || 'say';
   if (a === 'say') return say_(String(b.text || ''), String(b.by || ''));
-  if (a === 'list') return { ok: true, v: VERSION, records: list_(Number(b.days) || 60), settings: getSettings_() };
+  if (a === 'list') return { ok: true, v: VERSION, records: list_(Number(b.days) || 60), settings: getSettings_(), custom: getCustom_() };
   if (a === 'add') { const r = addRec_(b.rec || {}, String(b.by || ''), ''); return { ok: true, rec: r }; }
   if (a === 'update') { updateRec_(String(b.id), b.rec || {}); return { ok: true }; }
   if (a === 'delete') { deleteRec_(String(b.id)); return { ok: true }; }
   if (a === 'settings') { setSettings_(b.set || {}); return { ok: true, settings: getSettings_() }; }
+  if (a === 'custom') { setCustom_(b.list || []); return { ok: true, custom: getCustom_() }; }
   if (a === 'ping') return { ok: true, v: VERSION };
   throw new Error('不認得的動作 ' + a);
 }
@@ -159,11 +162,46 @@ function setSettings_(set) {
   });
 }
 
+/* ───────────── 自訂說法 ───────────── */
+
+function customSheet_() {
+  const ss = SpreadsheetApp.getActive();
+  let sh = ss.getSheetByName(CUSTOM_SHEET);
+  if (!sh) {
+    sh = ss.insertSheet(CUSTOM_SHEET);
+    sh.getRange(1, 1, 1, CUSTOM_HEAD.length).setValues([CUSTOM_HEAD]).setFontWeight('bold');
+    sh.setFrozenRows(1);
+  }
+  return sh;
+}
+
+function getCustom_() {
+  const sh = customSheet_();
+  const n = sh.getLastRow() - 1;
+  if (n < 1) return [];
+  return sh.getRange(2, 1, n, CUSTOM_HEAD.length).getValues()
+    .filter(r => String(r[0]).trim() && String(r[1]).trim())
+    .map(r => ({ w: String(r[0]).trim(), type: String(r[1]).trim(), value: r[2] === '' ? null : Number(r[2]), detail: String(r[3] || '').trim() }));
+}
+
+function setCustom_(list) {
+  const sh = customSheet_();
+  const n = sh.getLastRow() - 1;
+  if (n > 0) sh.getRange(2, 1, n, CUSTOM_HEAD.length).clearContent();
+  const rows = (list || []).filter(x => x && String(x.w || '').trim() && String(x.type || '').trim())
+    .slice(0, 200)
+    .map(x => [String(x.w).trim(), String(x.type).trim(), x.value == null || x.value === '' ? '' : Number(x.value), String(x.detail || '').trim()]);
+  if (rows.length) {
+    sh.getRange(2, 1, rows.length, 1).setNumberFormat('@');
+    sh.getRange(2, 1, rows.length, CUSTOM_HEAD.length).setValues(rows);
+  }
+}
+
 /* ───────────── Siri 說的話 ───────────── */
 
 function say_(text, by) {
   const now = new Date();
-  const p = parseText(text, now);
+  const p = parseText(text, now, getCustom_());
   const all = rows_().map(x => toRec_(x.r));
 
   if (p.kind === 'empty') return { ok: false, reply: '沒有聽到內容，再說一次喔' };
@@ -347,15 +385,39 @@ function pickWords_(s, list) {
   return out;
 }
 
-function parseText(raw, now) {
+const UNITS = { 喝奶: 'cc', 擠奶: 'cc', 喝水: 'cc', 親餵: '分鐘', 睡眠: '分鐘', 體溫: '°C', 體重: 'kg', 身高: 'cm', 頭圍: 'cm', 副食品: 'g' };
+
+// 自訂說法：找句子裡最長的那個
+function matchCustom_(s, custom) {
+  const flat = s.replace(/\s+/g, '').toLowerCase();
+  let best = null;
+  (custom || []).forEach(c => {
+    const w = String(c.w || '').replace(/\s+/g, '').toLowerCase();
+    if (w && flat.indexOf(w) >= 0 && (!best || w.length > best.wn.length)) best = Object.assign({ wn: w }, c);
+  });
+  return best;
+}
+
+function removeWord_(s, w) {
+  // 句子裡可能有空白，逐字容許空白比對
+  const re = new RegExp(w.split('').map(ch => ch.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('\\s*'), 'i');
+  return s.replace(re, ' ');
+}
+
+function parseText(raw, now, custom) {
   now = now || new Date();
   let s = String(raw || '').replace(/[，。！？、,.!?；;]+$/g, '').trim();
   if (!s) return { kind: 'empty' };
   s = s.replace(/[，。！？、,!?；;]/g, ' ');
-  if (/^(取消|刪除|删除|打錯|說錯|撤銷|復原)|刪(掉|除)上一筆|上一筆(刪|不要|錯)/.test(s)) return { kind: 'undo' };
+  const cust = matchCustom_(s, custom);
+  if (cust) {
+    if (cust.type === '取消') return { kind: 'undo' };
+    s = removeWord_(s, cust.wn);
+  }
+  if (!cust && /^(取消|刪除|删除|打錯|說錯|撤銷|復原)|刪(掉|除)上一筆|上一筆(刪|不要|錯)/.test(s)) return { kind: 'undo' };
 
   s = s.replace(/一點點|一點/g, '少量').replace(/一下下/g, '');
-  const forceNote = /^(備註|記錄一下|筆記)/.test(s);
+  const forceNote = !cust && /^(備註|記錄一下|筆記)/.test(s);
   s = cnToNum_(s);
   // 小數點：時間解析完再把「點」換成小數點
   const tp = parseTime_(s, now);
@@ -363,13 +425,14 @@ function parseText(raw, now) {
   const t = tp.t;
 
   // 查詢
-  if (/(上次|上一次|最後一次).*(什麼時候|幾點|多久)?|多久(沒|前)|幾點(喝|換|大|睡)/.test(rest) && !/\d{2,}/.test(rest)) {
+  if (!cust && /(上次|上一次|最後一次).*(什麼時候|幾點|多久)?|多久(沒|前)|幾點(喝|換|大|睡)/.test(rest) && !/\d{2,}/.test(rest)) {
     return { kind: 'query', what: 'last', type: typeOf_(rest) || '喝奶' };
   }
-  if (/(今天|今日).*(多少|幾次|幾|狀況|總共|統計|報告)|^(今天|今日)$/.test(rest)) return { kind: 'query', what: 'summary' };
-  if (/睡多久|睡了多久|還在睡|睡多少/.test(rest)) return { kind: 'query', what: 'last', type: '睡眠' };
+  if (!cust && /(今天|今日).*(多少|幾次|幾|狀況|總共|統計|報告)|^(今天|今日)$/.test(rest)) return { kind: 'query', what: 'summary' };
+  if (!cust && /睡多久|睡了多久|還在睡|睡多少/.test(rest)) return { kind: 'query', what: 'last', type: '睡眠' };
 
-  const type = forceNote ? null : typeOf_(rest);
+  const custType = cust ? (cust.type === '起床' ? '睡眠' : cust.type) : null;
+  const type = forceNote ? null : custType && custType !== '備註' ? custType : custType === '備註' ? null : typeOf_(rest);
   const n = firstNum_(rest);
   const rec = { t: t, type: type || '備註', value: null, unit: '', detail: '' };
   const out = { kind: 'add', rec: rec };
@@ -416,7 +479,7 @@ function parseText(raw, now) {
       break;
     }
     case '睡眠': {
-      if (/起床|醒了|醒來|睡醒|起來了|醒/.test(rest)) out.wake = true;
+      if ((cust && cust.type === '起床') || (!cust && /起床|醒了|醒來|睡醒|起來了|醒/.test(rest))) out.wake = true;
       const hm = rest.match(/(\d+(?:\.\d+)?)\s*(小時|個小時|鐘頭|個鐘頭)(?:\s*(\d+)\s*分)?/);
       const mm = rest.match(/(\d+)\s*分(鐘)?/);
       const half = rest.match(/(\d+)\s*個?半\s*(小時|鐘頭)/);
@@ -436,10 +499,16 @@ function parseText(raw, now) {
       break;
     }
     default:
-      rec.type = '備註'; rec.detail = String(raw).trim(); out.unsure = !forceNote;
+      rec.type = '備註'; rec.detail = cust ? rest.replace(/\s+/g, ' ').trim() : String(raw).trim(); out.unsure = !forceNote && !cust;
       if (forceNote) rec.detail = rec.detail.replace(/^(備註|記錄一下|筆記)\s*/, '');
   }
   if (type === '尿布' && /大便|便便/.test(rest)) rec.type = '大便';
+  if (cust) {
+    if (rec.value == null && cust.value != null && !isNaN(cust.value)) { rec.value = cust.value; rec.unit = rec.unit || UNITS[rec.type] || ''; }
+    if (cust.detail) rec.detail = [cust.detail, rec.detail].filter(Boolean).join(' ');
+    if (rec.type === '備註' && !rec.detail) rec.detail = cust.w;
+    out.custom = cust.w;
+  }
   return out;
 }
 
@@ -474,7 +543,7 @@ function typeOf_(s) {
 
 /* 在 Apps Script 編輯器選這個函式按「執行」，可以先建好分頁並授權 */
 function setup() {
-  sheet_(); setSheet_();
+  sheet_(); setSheet_(); customSheet_();
   Logger.log('完成！接著按「部署」→「新增部署作業」→ 網頁應用程式');
 }
 

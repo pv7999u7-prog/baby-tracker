@@ -8,118 +8,169 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Huninn&display=swap">
-<link rel="stylesheet" href="app.css?v=1">
+<link rel="stylesheet" href="app.css?v=2">
 <style>
   body { padding-bottom: 40px; }
   main { padding-top: 10px; }
-  .step { margin-top: 16px; }
-  .step h3 { margin: 0 0 8px; font-size: 18px; display: flex; gap: 10px; align-items: center; }
-  .step h3 .n { width: 32px; height: 32px; flex: none; border-radius: 50%; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; font-size: 16px; }
-  .step ol, .step ul { margin: 6px 0 0; padding-left: 22px; }
-  .step li { margin: 5px 0; }
+  .step { margin-top: 16px; scroll-margin-top: 90px; }
+  .step > h3 { margin: 0 0 6px; font-size: 19px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .step > h3 .n { width: 34px; height: 34px; flex: none; border-radius: 50%; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; font-size: 17px; }
+  .where { font-size: 12.5px; padding: 1px 10px; border-radius: 999px; background: var(--milk-bg); color: var(--ink-2); font-weight: 400; }
+  .where.phone { background: var(--bf-bg); }
   .step p { margin: 6px 0; }
-  .where { display: inline-block; font-size: 12px; padding: 1px 9px; border-radius: 999px; background: var(--milk-bg); color: var(--ink-2); margin-left: 6px; font-weight: 400; }
-  code, .k { background: var(--card-2); border-radius: 6px; padding: 1px 6px; font-family: ui-monospace, Menlo, monospace; font-size: 14px; }
-  .k { font-family: inherit; font-weight: 700; }
-  .note { font-size: 14px; color: var(--ink-2); background: var(--poop-bg); border-radius: 14px; padding: 9px 12px; margin-top: 10px; }
-  .act { margin: 8px 0; padding: 10px 12px; border-radius: 16px; background: var(--card-2); }
-  .act b { display: block; }
-  .act .sm { font-size: 14px; color: var(--ink-2); }
+  .k { background: var(--card-2); border-radius: 6px; padding: 1px 7px; font-weight: 700; white-space: nowrap; }
+  .see { font-size: 13.5px; color: var(--ink-2); background: var(--milk-bg); border-radius: 12px; padding: 7px 11px; margin-top: 6px; }
+  .see::before { content: "👀 你會看到："; font-weight: 700; color: var(--ink); }
+  .go { display: inline-flex; align-items: center; gap: 6px; background: var(--accent); color: var(--accent-ink); text-decoration: none; border-radius: 999px; padding: 6px 14px; font-weight: 700; font-size: 14.5px; box-shadow: 0 3px 0 #d97764; margin: 4px 0; }
+  .links { display: grid; gap: 8px; }
+  .links a { display: flex; align-items: center; gap: 12px; text-decoration: none; color: inherit; background: var(--card-2); border-radius: 16px; padding: 10px 14px; }
+  .links a b { display: block; }
+  .links a span { font-size: 13px; color: var(--ink-2); word-break: break-all; }
+  .links a .ic { font-size: 24px; }
+  .toc { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+  .toc a { text-decoration: none; }
+  .qr-wrap { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; margin-top: 8px; }
+  #qr { background: #fff; padding: 10px; border-radius: 16px; width: 160px; height: 160px; flex: none; }
+  #qr img, #qr canvas { width: 140px !important; height: 140px !important; }
   table.say-t { width: 100%; border-collapse: collapse; font-size: 15px; }
   table.say-t td { padding: 7px 4px; border-bottom: 2px dotted var(--line); vertical-align: top; }
   table.say-t td:first-child { white-space: nowrap; font-weight: 700; padding-right: 10px; }
-  .copy { margin-top: 10px; }
+  .faq b { display: block; margin-top: 12px; }
+  .faq p { margin: 2px 0 0; font-size: 15px; color: var(--ink-2); }
   .back { display: inline-block; margin: 4px 0 0; color: var(--accent); text-decoration: none; font-weight: 700; }
 </style>
 </head>
 <body>
 <header class="top">
   <div class="avatar" aria-hidden="true"><img src="icon-180.png" alt="" style="width:100%;height:100%"></div>
-  <div class="baby"><div class="baby-name">設定教學</div><div class="baby-age" style="padding:0">大約 10 分鐘，只要做一次</div></div>
+  <div class="baby"><div class="baby-name">設定教學</div><div class="baby-age" style="padding:0">約 10 分鐘，只要做一次</div></div>
 </header>
 <main>
   <a class="back" href="./">‹ 回到寶寶日記</a>
 
   <div class="card step">
-    <p>寶寶日記的資料會存在<b>你自己的 Google 試算表</b>，不會經過別人。做完下面 6 步，就可以用 Siri 說「寶寶紀錄」來記錄，打開 App 也能看到圖表。</p>
-    <div class="note">💻 第 1～4 步要貼程式，<b>用電腦做最快</b>。第 5、6 步用 iPhone 做。</div>
+    <p>寶寶日記的資料存在<b>你自己的 Google 試算表</b>，不會經過別人。照下面做完，就能對 Siri 說「寶寶紀錄」來記錄，打開 App 看圖表；另一半的手機也能一起記、一起看。</p>
+    <div class="note">💻 <b>第 1～4 步用電腦</b>（要貼程式），<b>第 5～7 步用 iPhone</b>。準備：一個 Google 帳號（Gmail 就是）。</div>
+    <div class="toc">
+      <a class="mini" href="#s1">1 建試算表</a><a class="mini" href="#s2">2 貼程式</a><a class="mini" href="#s3">3 授權</a><a class="mini" href="#s4">4 部署</a>
+      <a class="mini" href="#s5">5 裝 App</a><a class="mini" href="#s6">6 Siri 捷徑</a><a class="mini" href="#s7">7 另一半</a><a class="mini" href="#faq">有問題</a>
+    </div>
   </div>
 
   <div class="card step">
-    <h3><span class="n">1</span>建立試算表 <span class="where">電腦</span></h3>
-    <ol>
-      <li>用自己的 Google 帳號打開 <a href="https://sheets.new" target="_blank" rel="noopener">sheets.new</a>，會開一份新的試算表</li>
-      <li>左上角把名稱改成「寶寶日記」</li>
+    <h3>🔗 會用到的連結</h3>
+    <div class="links">
+      <a id="appLink" href="./"><span class="ic">👶</span><div><b>寶寶日記 App</b><span id="appUrl"></span></div></a>
+      <a href="https://sheets.new" target="_blank" rel="noopener"><span class="ic">📗</span><div><b>開一份新的 Google 試算表</b><span>https://sheets.new</span></div></a>
+      <a href="apps-script/Code.gs" target="_blank"><span class="ic">📄</span><div><b>程式碼（Code.gs）</b><span>第 2 步要複製的內容</span></div></a>
+      <a href="https://script.google.com/home" target="_blank" rel="noopener"><span class="ic">⚙️</span><div><b>我的 Apps Script 專案</b><span>之後要更新程式、找回網址時用</span></div></a>
+      <a href="https://apps.apple.com/tw/app/id915249334" target="_blank" rel="noopener"><span class="ic">🔷</span><div><b>「捷徑」App（iPhone 內建）</b><span>不小心刪掉的話從 App Store 裝回來</span></div></a>
+    </div>
+  </div>
+
+  <div class="card step" id="s1">
+    <h3><span class="n">1</span>建立試算表 <span class="where">💻 電腦</span></h3>
+    <ol class="steps">
+      <li>用電腦的 Chrome 打開 <a class="go" href="https://sheets.new" target="_blank" rel="noopener">📗 sheets.new</a>（沒登入會先要你登入 Google）
+        <div class="see">一份空白的「未命名的試算表」</div></li>
+      <li>點左上角「<b>未命名的試算表</b>」這幾個字，改成 <span class="k">寶寶日記</span>，按 Enter</li>
     </ol>
   </div>
 
-  <div class="card step">
-    <h3><span class="n">2</span>貼上程式 <span class="where">電腦</span></h3>
-    <ol>
-      <li>上方選單：<span class="k">擴充功能</span> → <span class="k">Apps Script</span></li>
-      <li>把編輯區原本的幾行全部刪掉</li>
-      <li>按下面的按鈕複製程式，貼進編輯區
-        <div class="btns copy"><button class="btn" id="copyBtn">📋 複製程式碼</button></div>
-        <div class="say-hint" style="text-align:center">或<a href="apps-script/Code.gs" target="_blank" style="color:var(--accent)">直接打開程式碼</a>全選複製</div>
-      </li>
-      <li><b>改密碼</b>：第一個 <code>const KEY = '請改成你的密碼';</code> 把引號裡的字改成你自己的密碼（英文或數字，例如 <code>bb2026xyz</code>）</li>
-      <li>按 💾 儲存</li>
+  <div class="card step" id="s2">
+    <h3><span class="n">2</span>貼上程式 <span class="where">💻 電腦</span></h3>
+    <ol class="steps">
+      <li>試算表上方選單點 <span class="k">擴充功能</span> → <span class="k">Apps Script</span>
+        <div class="see">開了一個新分頁，左邊有「Code.gs」，中間寫著 <code>function myFunction() { }</code></div></li>
+      <li>左上角「<b>未命名的專案</b>」點一下，改名為 <span class="k">寶寶日記</span> → <span class="k">重新命名</span></li>
+      <li>點一下中間的程式區，按 <span class="k">Ctrl＋A</span>（Mac 是 ⌘＋A）全選，按 <span class="k">Delete</span> 刪光</li>
+      <li>回到這一頁按 <button class="mini" id="copyBtn">📋 複製程式碼</button>，再回 Apps Script 按 <span class="k">Ctrl＋V</span> 貼上
+        <div class="see">很長一段程式，第一段是「寶寶日記 — Google Apps Script 後端」</div></li>
+      <li><b>設定密碼</b>：找到這一行（大約第 13 行）<br><code>const KEY = '請改成你的密碼';</code><br>把<b>引號裡的字</b>改成你自己的密碼，英文和數字就好，例如 <code>const KEY = 'bb2026xyz';</code>
+        <div class="note" style="margin:6px 0 0">⚠️ 引號 <code>'</code> 和最後的分號 <code>;</code> 要留著。這組密碼等一下 App 和捷徑都要用，先記下來。</div></li>
+      <li>按上方的 💾（<span class="k">儲存專案</span>），或按 <span class="k">Ctrl＋S</span></li>
     </ol>
   </div>
 
-  <div class="card step">
-    <h3><span class="n">3</span>第一次執行（授權） <span class="where">電腦</span></h3>
-    <ol>
-      <li>上方工具列函式選單選 <span class="k">setup</span>，按 <span class="k">▷ 執行</span></li>
-      <li>跳出「需要授權」→ 選自己的帳號</li>
-      <li>如果看到「Google 尚未驗證這個應用程式」：按 <span class="k">進階</span> → <span class="k">前往「未命名的專案」（不安全）</span> → <span class="k">允許</span>
-        <div class="note">這是你自己剛貼的程式，只會讀寫這一份試算表，所以可以放心允許。</div></li>
-      <li>回到試算表，會多出「紀錄」和「設定」兩個分頁</li>
+  <div class="card step" id="s3">
+    <h3><span class="n">3</span>第一次執行（授權） <span class="where">💻 電腦</span></h3>
+    <ol class="steps">
+      <li>上方工具列「▷ 執行」右邊有個下拉選單，選 <span class="k">setup</span></li>
+      <li>按 <span class="k">▷ 執行</span>
+        <div class="see">「需要授權」視窗 → 按 <span class="k">審查權限</span></div></li>
+      <li>選你的 Google 帳號</li>
+      <li>出現「<b>Google 尚未驗證這個應用程式</b>」：點左下角小字 <span class="k">進階</span> → 最下面 <span class="k">前往「寶寶日記」（不安全）</span>
+        <div class="note" style="margin:6px 0 0">這是你自己剛貼的程式，只會讀寫你這份試算表，所以可以放心。</div></li>
+      <li>按 <span class="k">允許</span>（有勾選框的話全部勾起來再按「繼續」）
+        <div class="see">下方「執行記錄」出現「完成！」；回到試算表，下面多了「紀錄」「設定」「自訂說法」三個分頁</div></li>
     </ol>
   </div>
 
-  <div class="card step">
-    <h3><span class="n">4</span>部署成網址 <span class="where">電腦</span></h3>
-    <ol>
-      <li>Apps Script 右上角 <span class="k">部署</span> → <span class="k">新增部署作業</span></li>
-      <li>點「選取類型」旁的 ⚙️ → <span class="k">網頁應用程式</span></li>
-      <li>執行身分：<span class="k">我</span>；誰可以存取：<span class="k">所有人</span></li>
-      <li>按 <span class="k">部署</span>，複製「網頁應用程式網址」（<code>https://script.google.com/macros/s/…/exec</code>）</li>
-      <li>把<b>網址和密碼</b>傳到自己的 iPhone（例如用 LINE 傳給自己）</li>
+  <div class="card step" id="s4">
+    <h3><span class="n">4</span>部署成網址 <span class="where">💻 電腦</span></h3>
+    <ol class="steps">
+      <li>Apps Script 右上角藍色 <span class="k">部署</span> → <span class="k">新增部署作業</span></li>
+      <li>左邊「選取類型」旁的 ⚙️ 齒輪 → <span class="k">網頁應用程式</span></li>
+      <li>右邊設定：<br>・說明：隨便寫，例如「寶寶日記」<br>・執行身分：<span class="k">我（你的信箱）</span><br>・具有存取權的使用者：<span class="k">所有人</span>
+        <div class="note" style="margin:6px 0 0">一定要選「所有人」，不然 Siri 和另一半的手機連不進來。別人沒有密碼也讀不到資料。</div></li>
+      <li>按 <span class="k">部署</span>（如果又要授權，照第 3 步再按一次允許）</li>
+      <li>出現「<b>網頁應用程式</b>」網址，按下面的 <span class="k">複製</span>
+        <div class="see">網址長這樣：<code>https://script.google.com/macros/s/很長一串/exec</code>，結尾是 <code>/exec</code></div></li>
+      <li><b>檢查一下</b>：把網址貼到瀏覽器新分頁打開
+        <div class="see">「寶寶日記後端正常運作（第 2 版）」就成功了</div></li>
+      <li>把<b>網址</b>和<b>密碼</b>傳到自己的 iPhone（例如用 LINE 傳給自己、或「Keep 備忘錄」）</li>
     </ol>
-    <div class="note">之後如果程式有更新：<span class="k">部署</span> → <span class="k">管理部署作業</span> → ✏️ → 版本選「新版本」→ 部署。這樣網址不會變。</div>
   </div>
 
-  <div class="card step">
-    <h3><span class="n">5</span>把 App 加到主畫面 <span class="where">iPhone</span></h3>
-    <ol>
-      <li>用 <b>Safari</b> 打開寶寶日記網址</li>
-      <li>下方 <span class="k">分享</span> 按鈕 → <span class="k">加入主畫面</span></li>
-      <li>從主畫面打開 → <span class="k">設定</span> → 貼上網址和密碼 → 選「我是媽媽／爸爸」→ <span class="k">儲存並測試連線</span></li>
-      <li>在設定頁填寶寶名字和生日，兩支手機都會看到</li>
+  <div class="card step" id="s5">
+    <h3><span class="n">5</span>把 App 裝到 iPhone 主畫面 <span class="where phone">📱 iPhone</span></h3>
+    <ol class="steps">
+      <li>用 iPhone 相機掃這個 QR code（或在 iPhone 的 <b>Safari</b> 打開上面的 App 連結）
+        <div class="qr-wrap"><div id="qr"></div><div style="font-size:14px;color:var(--ink-2)">要用 <b>Safari</b> 打開。<br>如果是用 LINE 點開的，點右下角「⋯」→「用 Safari 開啟」。</div></div></li>
+      <li>Safari 下方中間的 <span class="k">分享</span>（方框加向上箭頭）→ 往下滑 → <span class="k">加入主畫面</span> → 右上 <span class="k">加入</span>
+        <div class="see">主畫面多一個寶寶臉圖示「寶寶日記」</div></li>
+      <li>從主畫面打開寶寶日記 → 下方 <span class="k">⚙️ 設定</span></li>
+      <li>「網頁應用程式網址」貼上第 4 步的網址；「密碼」打第 2 步設的密碼；「我是」選 <span class="k">媽媽</span> 或 <span class="k">爸爸</span></li>
+      <li>按 <span class="k">儲存並測試連線</span>
+        <div class="see">「✓ 連線成功」</div></li>
+      <li>同一頁上面填<b>寶寶名字</b>和<b>生日</b> → <span class="k">儲存</span>（兩支手機都會看到）</li>
     </ol>
-    <div class="note">👨‍👩‍👧 另一半的手機：一樣做第 5、6 步，填<b>同一組網址和密碼</b>就好，兩個人的紀錄會在一起。</div>
+  </div>
+
+  <div class="card step" id="s6">
+    <h3><span class="n">6</span>做 Siri 捷徑 <span class="where phone">📱 iPhone</span></h3>
+    <div class="note">⭐ <b>最簡單</b>：在寶寶日記 App →「⚙️ 設定」→「🎙 Siri 語音設定」→「📋 看捷徑做法」。那裡的步驟已經帶入你的網址和密碼，每一格都有「複製」按鈕，照著點就好。也可以在那裡<b>改呼叫的名稱</b>、加「換尿布」這種一句話捷徑、設定「ㄋㄟㄋㄟ」這種家裡的說法。</div>
+    <p>如果要照這裡做（名稱用「寶寶紀錄」）：</p>
+    <ol class="steps">
+      <li>打開 iPhone 的「<b>捷徑</b>」App（藍紫色兩個方塊的圖示）<a class="go" href="shortcuts://">🔷 打開捷徑</a>，下方選「<b>捷徑</b>」→ 右上角 <span class="k">＋</span></li>
+      <li>點最上面的「<b>新捷徑</b>」→ <span class="k">重新命名</span> → 輸入 <span class="k">寶寶紀錄</span> → 完成
+        <div class="note" style="margin:6px 0 0">這個名字就是呼叫 Siri 的說法：「嘿 Siri，<b>寶寶紀錄</b>」。想改成別的名字也可以，例如「小寶日記」。</div></li>
+      <li>點 <span class="k">搜尋動作</span> → 輸入「聽寫」→ 點 <span class="k">聽寫文字</span>；點這個動作右邊的 ⌄：語言選 <span class="k">中文（台灣）</span>、停止聆聽選 <span class="k">暫停後</span></li>
+      <li>下方搜尋列輸入「URL」→ 點 <span class="k">取得 URL 內容</span>；點藍色的「URL」字樣 → 貼上第 4 步的網址</li>
+      <li>點這個動作右邊的 ⌄ 展開：<span class="k">方法</span> 改 <b>POST</b>；<span class="k">要求本文</span> 選 <b>JSON</b></li>
+      <li>點 <span class="k">新增新欄位</span> → <span class="k">文字</span>：「鍵」打 <code>key</code>，「文字」打你的密碼</li>
+      <li>再 <span class="k">新增新欄位</span> → <span class="k">文字</span>：「鍵」打 <code>text</code>，「文字」那格點一下 → 鍵盤上方選藍色變數 <span class="k">聽寫的文字</span></li>
+      <li>再 <span class="k">新增新欄位</span> → <span class="k">文字</span>：「鍵」打 <code>plain</code>，「文字」打 <code>1</code></li>
+      <li>（可省略）再加一個：「鍵」<code>by</code>，「文字」<code>媽媽</code>（App 會顯示是誰記的）</li>
+      <li>下方搜尋列輸入「說出」→ 點 <span class="k">說出文字</span>（內容自動是「URL 的內容」）</li>
+      <li>右上角 <span class="k">完成</span>。試試看：說「<b>嘿 Siri，寶寶紀錄</b>」，聽到嗶聲說「<b>喝奶一百二</b>」
+        <div class="see">Siri 唸「已記錄喝奶 120cc。今天第 1 次，共 120cc」</div></li>
+      <li>第一次用會問「<b>要允許「寶寶紀錄」傳送到 script.google.com 嗎？</b>」→ 選 <span class="k">永遠允許</span>（可能會問兩次）</li>
+    </ol>
+  </div>
+
+  <div class="card step" id="s7">
+    <h3><span class="n">7</span>另一半的手機 <span class="where phone">📱 iPhone</span></h3>
+    <ol class="steps">
+      <li>把 App 連結、<b>同一組網址和密碼</b>傳給另一半</li>
+      <li>另一半照第 5 步裝 App，「我是」選自己 → 儲存並測試連線</li>
+      <li>Siri 捷徑：照第 6 步做一個；或在 App「🎙 Siri 語音設定」照步驟做（「by」改成自己）</li>
+    </ol>
+    <div class="note">👨‍👩‍👧 兩支手機寫進的是<b>同一份試算表</b>。App 打開時、以及每 1 分鐘會自動更新，對方剛記的很快就看得到。</div>
   </div>
 
   <div class="card step">
-    <h3><span class="n">6</span>做 Siri 捷徑 <span class="where">iPhone</span></h3>
-    <p>打開「<b>捷徑</b>」App → 右上 <span class="k">＋</span> → 最上面名稱改成 <span class="k">寶寶紀錄</span>，依序加入 3 個動作：</p>
-    <div class="act"><b>① 聽寫文字</b><span class="sm">搜尋「聽寫」。點開箭頭：語言選「中文（台灣）」，停止聆聽選「暫停後」。</span></div>
-    <div class="act"><b>② 取得 URL 內容</b><span class="sm">
-      URL：貼上第 4 步的網址<br>
-      點開箭頭 → 方法：<span class="k">POST</span>；要求本文：<span class="k">JSON</span>，新增 3 個欄位（都選「文字」）：<br>
-      ・<code>key</code> → 你的密碼<br>
-      ・<code>text</code> → 點一下，選上面的變數「<b>聽寫的文字</b>」<br>
-      ・<code>plain</code> → <code>1</code><br>
-      （想知道誰記的，可再加 <code>by</code> → 媽媽）</span></div>
-    <div class="act"><b>③ 說出文字</b><span class="sm">搜尋「說出」，內容選上一步的「URL 的內容」。</span></div>
-    <p>完成！對 iPhone 說：<b>「嘿 Siri，寶寶紀錄」</b>，聽到「嗶」之後說「喝奶一百二」，Siri 會回答「已記錄喝奶 120cc。今天第 5 次，共 600cc…」。</p>
-    <div class="note">⚡ 想更快：複製這個捷徑，把 ① 換成「文字」動作直接寫「尿布」，名稱改成「換尿布」。之後說「嘿 Siri，換尿布」一句就記好。「寶寶睡了」（文字：睡覺）、「寶寶醒了」（文字：起床）也很好用。<br>
-    📤 要給另一半：在捷徑上長按 → 分享 → 用 LINE 傳過去，對方再把 <code>by</code> 改成自己。</div>
-  </div>
-
-  <div class="card step">
-    <h3><span class="n">💬</span>可以這樣跟 Siri 說</h3>
+    <h3>💬 可以這樣跟 Siri 說</h3>
     <table class="say-t">
       <tr><td>🍼 喝奶</td><td>喝奶一百二、母奶九十、配方奶一百五十 cc</td></tr>
       <tr><td>🤱 親餵</td><td>親餵左邊十五分鐘右邊十分鐘</td></tr>
@@ -133,21 +184,44 @@
       <tr><td>❓ 問問題</td><td>上次喝奶、上次大便什麼時候、今天狀況、睡多久了</td></tr>
       <tr><td>↩️ 說錯了</td><td>取消、刪除上一筆</td></tr>
     </table>
-    <div class="note">聽不懂的話會先存成「備註」，之後在 App 裡點那一筆就能修改。</div>
+    <div class="note">家裡有自己的講法（「ㄋㄟㄋㄟ」「臭臭」「一瓶」）？到 App「🎙 Siri 語音設定 → 自訂說法」加上去就好，不用改捷徑。聽不懂的話會先存成「備註」，在 App 點那一筆就能改。</div>
+  </div>
+
+  <div class="card step faq" id="faq">
+    <h3>🛠 有問題時</h3>
+    <b>App 顯示「密碼不對」／Siri 說「沒有記錄成功：密碼不對」</b>
+    <p>App 設定、捷徑裡的 key、Code.gs 第一行的 KEY，三個要一模一樣（大小寫也要一樣）。改了 Code.gs 的密碼，要照下面「更新程式」重新部署才生效。</p>
+    <b>App 顯示「回應看不懂，網址可能貼錯了」</b>
+    <p>網址要是第 4 步「網頁應用程式」那個，結尾是 <code>/exec</code>，不是 Apps Script 編輯器的網址。第 4 步的「具有存取權的使用者」要選「所有人」。</p>
+    <b>Siri 說「寶寶紀錄」打不開，或跑去搜尋網路</b>
+    <p>捷徑名稱要和說的一字不差；名字太常見可能被 Siri 當成別的指令，換成「小寶日記」這種特別一點的名稱。</p>
+    <b>Siri 聽錯字</b>
+    <p>到 App「🎙 Siri 語音設定 → 試試看」打一樣的字看會記成什麼；把常被聽錯的字加到「自訂說法」。</p>
+    <b>找不到部署網址了</b>
+    <p>打開 <a href="https://script.google.com/home" target="_blank" rel="noopener" style="color:var(--accent)">我的 Apps Script 專案</a> → 寶寶日記 → <span class="k">部署</span> → <span class="k">管理部署作業</span>，網址在右邊。</p>
+    <b>更新程式（有新版本時）</b>
+    <p>Apps Script 裡全選刪掉 → 貼上新的程式碼 → <b>把密碼改回你原本的</b> → 儲存 → <span class="k">部署</span> → <span class="k">管理部署作業</span> → ✏️ 編輯 → 版本選 <span class="k">新版本</span> → <span class="k">部署</span>。網址不會變，手機不用重設。</p>
   </div>
 </main>
 <div class="toast" id="toast" hidden></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
-document.getElementById('copyBtn').addEventListener('click', async () => {
-  const t = document.getElementById('toast');
-  const show = m => { t.textContent = m; t.hidden = false; setTimeout(() => { t.hidden = true; }, 2500); };
-  try {
-    const src = await (await fetch('apps-script/Code.gs?v=1')).text();
-    const out = src.replace(/\nif \(typeof module[^\n]*\n?$/, '\n');
-    await navigator.clipboard.writeText(out);
-    show('✓ 已複製，貼到 Apps Script 吧');
-  } catch (e) { show('複製失敗，請改用「直接打開程式碼」'); }
-});
+(function () {
+  var appUrl = new URL('./', location.href).href;
+  document.getElementById('appUrl').textContent = appUrl;
+  try { new QRCode(document.getElementById('qr'), { text: appUrl, width: 140, height: 140, colorDark: '#5a463d', colorLight: '#ffffff' }); }
+  catch (e) { document.getElementById('qr').style.display = 'none'; }
+  var t = document.getElementById('toast');
+  function show(m) { t.textContent = m; t.hidden = false; setTimeout(function () { t.hidden = true; }, 2500); }
+  document.getElementById('copyBtn').addEventListener('click', async function () {
+    try {
+      var src = await (await fetch('apps-script/Code.gs?v=2', { cache: 'no-store' })).text();
+      src = src.replace(/\nif \(typeof module[^\n]*\n?$/, '\n');
+      await navigator.clipboard.writeText(src);
+      show('✓ 已複製，回 Apps Script 貼上');
+    } catch (e) { show('複製失敗，請點上面的「程式碼」連結全選複製'); }
+  });
+})();
 </script>
 </body>
 </html>

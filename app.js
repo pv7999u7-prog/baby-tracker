@@ -1,7 +1,7 @@
 /* 寶寶日記 App */
 (() => {
 'use strict';
-const VERSION = '1.0.0';
+const VERSION = '1.1.0';
 const $ = s => document.querySelector(s);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const LS = {
@@ -39,10 +39,11 @@ const state = {
   settings: LS.get('settings', {}),
   demo: LS.get('demo', false),
   tab: 'today', filter: '全部', range: 7, logDays: 14, synced: LS.get('synced', 0),
+  custom: LS.get('custom', []),
   busy: false, err: '', tables: {}
 };
 let parseText = null;
-fetch('apps-script/Code.gs?v=1').then(r => r.text()).then(src => {
+fetch('apps-script/Code.gs?v=2').then(r => r.text()).then(src => {
   parseText = new Function(src + '\n;return parseText;')();
 }).catch(() => {});
 
@@ -87,9 +88,9 @@ async function sync(quiet) {
   state.busy = true; state.err = ''; syncUI();
   try {
     const j = await api({ action: 'list', days: 120 });
-    state.recs = j.records; state.settings = j.settings || {};
+    state.recs = j.records; state.settings = j.settings || {}; state.custom = j.custom || [];
     state.synced = Date.now();
-    if (!state.demo) { LS.set('cache', state.recs); LS.set('settings', state.settings); LS.set('synced', state.synced); }
+    if (!state.demo) { LS.set('cache', state.recs); LS.set('settings', state.settings); LS.set('custom', state.custom); LS.set('synced', state.synced); }
   } catch (e) {
     state.err = e.message;
     if (!quiet) toast('更新失敗：' + e.message);
@@ -173,7 +174,7 @@ const lastOf = types => state.recs.filter(r => types.indexOf(r.type) >= 0).slice
 
 /* ───── 畫面 ───── */
 function render() {
-  document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === state.tab));
+  document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === (state.tab === 'siri' ? 'settings' : state.tab)));
   const name = state.settings['寶寶名字'] || (state.demo ? '示範寶寶' : '寶寶日記');
   $('#babyName').textContent = name;
   $('#babyAge').textContent = ageText(state.settings['生日']);
@@ -182,6 +183,7 @@ function render() {
   if (state.tab === 'today') v.innerHTML = viewToday();
   else if (state.tab === 'log') v.innerHTML = viewLog();
   else if (state.tab === 'charts') { v.innerHTML = viewCharts(); drawCharts(); }
+  else if (state.tab === 'siri') v.innerHTML = viewSiri();
   else v.innerHTML = viewSettings();
 }
 
@@ -526,12 +528,208 @@ function viewSettings() {
       <input id="sBy" value="${esc(by)}" placeholder="或自己打" style="margin-top:8px"></div>
     <button class="btn" data-act="save-conn">儲存並測試連線</button>
   </div>
+  <h2>Siri 語音</h2><div class="card set">
+    <p>改呼叫 Siri 的名稱（現在是「${esc(state.settings['Siri名稱'] || '寶寶紀錄')}」）、加「一句話就記好」的捷徑、自訂家裡的講法（例如「ㄋㄟㄋㄟ」＝喝奶）。</p>
+    <button class="btn" data-tab-go="siri">🎙 Siri 語音設定</button>
+  </div>
   <h2>其他</h2><div class="card set">
     <a class="linkbtn" href="setup.html">📖 設定教學（試算表＋Siri 捷徑）</a>
     <div class="btns" style="margin-top:10px"><button class="btn ghost" data-act="${state.demo ? 'demo-off' : 'demo-on'}">${state.demo ? '關閉示範模式' : '開啟示範模式（假資料）'}</button></div>
   </div>
   <div class="ver">寶寶日記 ${VERSION}${state.synced && !state.demo ? ' · 上次更新 ' + dayLabel(state.synced) + ' ' + hm(state.synced) : ''}</div>`;
 }
+
+/* ───── Siri 語音設定 ───── */
+const SIRI_TYPES = Object.keys(T).concat(['起床', '取消']);
+const DEFAULT_QUICK = [{ name: '換尿布', text: '尿布' }, { name: '寶寶睡了', text: '睡覺' }, { name: '寶寶醒了', text: '起床' }];
+const siriName = () => state.settings['Siri名稱'] || '寶寶紀錄';
+function siriQuick() {
+  try { const q = JSON.parse(state.settings['Siri快捷'] || 'null'); return Array.isArray(q) ? q : DEFAULT_QUICK; }
+  catch (e) { return DEFAULT_QUICK; }
+}
+const siriUI = { open: null, test: '' };
+const unitOf = t => ({ 喝奶: 'cc', 擠奶: 'cc', 喝水: 'cc', 親餵: '分鐘', 睡眠: '分鐘', 體溫: '°C', 體重: 'kg', 身高: 'cm', 頭圍: 'cm', 副食品: 'g' }[t] || '');
+const BUILTIN = [
+  ['喝奶', '喝奶、餵奶、母奶、配方奶、瓶餵，或只說「120cc」'],
+  ['親餵', '親餵、餵母乳、左邊十五分鐘右邊十分鐘'],
+  ['擠奶', '擠奶、集乳、吸奶'],
+  ['尿布', '尿布、換尿布、尿尿、小便、濕了'],
+  ['大便', '大便、便便、拉屎、嗯嗯、大號、拉肚子；可加顏色（黃、綠、褐、黑、紅、白）和形狀（稀、糊、軟、硬、水便）'],
+  ['睡眠', '睡覺、睡著了、睡了兩小時；醒來說「起床」「醒了」「睡醒」'],
+  ['體溫', '體溫、發燒、耳溫、額溫、肛溫、腋溫、37.5 度'],
+  ['吐奶', '吐奶、溢奶、吐了'],
+  ['體重', '體重、公斤（或公克）'],
+  ['身高', '身高、身長'],
+  ['頭圍', '頭圍'],
+  ['用藥', '藥、餵藥、退燒、滴劑、維他命、益生菌'],
+  ['疫苗', '疫苗、打針、預防針'],
+  ['洗澡', '洗澡、泡澡'],
+  ['喝水', '喝水'],
+  ['副食品', '副食品、吃了、米糊、果泥、粥'],
+  ['備註', '開頭說「備註」；聽不懂的話也會先存成備註'],
+  ['⏰ 時間', '十分鐘前、半小時前、剛剛、下午三點、凌晨兩點半'],
+  ['❓ 查詢', '上次喝奶、上次大便什麼時候、今天狀況、睡多久了'],
+  ['↩️ 取消', '取消、刪除上一筆、說錯了']
+];
+
+function viewSiri() {
+  const name = siriName(), quick = siriQuick();
+  let h = `<button class="back-btn" data-tab-go="settings">‹ 設定</button>`;
+  h += `<h2>呼叫 Siri 的名稱</h2><div class="card set">
+    <p>對 iPhone 說「嘿 Siri，<b>${esc(name)}</b>」，聽到嗶聲後再說要記的事，例如「喝奶一百二」。</p>
+    <div class="fld"><label>名稱（＝捷徑的名字）</label><input id="siName" value="${esc(name)}" placeholder="寶寶紀錄"></div>
+    <div class="note">改了名稱以後，iPhone「捷徑」App 裡的那個捷徑也要改成一樣：<b>長按捷徑 → 重新命名</b>。網頁沒辦法直接幫你改 iPhone 上的捷徑。</div>
+    <div class="btns"><button class="btn" data-sact="save-name">儲存名稱</button><a class="btn ghost" href="shortcuts://">打開捷徑 App</a></div>
+    ${stepsBlock('main', name, null)}
+  </div>`;
+  h += `<h2>一句話就記好的捷徑</h2><div class="card set"><p>不用說第二句。例如說「嘿 Siri，換尿布」就直接記一筆尿布。每一個都要在捷徑 App 做一個，點「做法」看步驟。</p>
+    <div class="qlist">${quick.map((q, i) => `<div class="qrow"><div class="qm"><b>「${esc(q.name)}」</b><span>→ 記成「${esc(q.text)}」</span></div>
+      <button class="mini" data-sact="q-edit" data-i="${i}">修改</button><button class="mini" data-sact="q-steps" data-i="${i}">${siriUI.open === 'q' + i ? '收起' : '做法'}</button></div>
+      ${siriUI.open === 'q' + i ? stepsBlock('q' + i, q.name, q.text) : ''}`).join('') || '<div class="empty" style="padding:14px">還沒有</div>'}</div>
+    <div class="btns"><button class="btn ghost" data-sact="q-add">＋ 新增一句話捷徑</button></div></div>`;
+  h += `<h2>自訂說法</h2><div class="card set"><p>家裡習慣的講法，例如「ㄋㄟㄋㄟ」＝喝奶、「臭臭」＝大便、「一瓶」＝喝奶 160cc。Siri 和打字記錄都會套用，兩支手機共用，不用改捷徑。</p>
+    <div class="qlist">${state.custom.length ? state.custom.map((c, i) => `<button class="qrow" data-sact="c-edit" data-i="${i}"><div class="qm"><b>「${esc(c.w)}」</b><span>→ ${c.type === '起床' ? '🌞 起床' : c.type === '取消' ? '↩️ 取消上一筆' : ic(c.type) + ' ' + esc(c.type)}${c.value != null ? ' ' + num(c.value) + unitOf(c.type) : ''}${c.detail ? '・' + esc(c.detail) : ''}</span></div><span class="chev">›</span></button>`).join('') : '<div class="empty" style="padding:14px">還沒有自訂說法</div>'}</div>
+    <div class="btns"><button class="btn ghost" data-sact="c-add">＋ 新增說法</button></div></div>`;
+  h += `<h2>試試看</h2><div class="card set"><p>打一句你會跟 Siri 說的話，看會被記成什麼（只是試，不會存）。</p>
+    <form class="say" data-form="try" style="margin-top:0"><input id="siTry" value="${esc(siriUI.test)}" placeholder="例如：十分鐘前ㄋㄟㄋㄟ一百二" autocomplete="off"><button>試試</button></form>
+    <div id="siTryOut" class="try-out">${tryResult(siriUI.test)}</div></div>`;
+  h += `<h2>內建說法</h2><div class="card set"><details><summary>不用設定就聽得懂的說法（點開）</summary>${BUILTIN.map(([t, w]) => `<div class="bi"><b>${T[t] ? ic(t) + ' ' : ''}${t}</b>${esc(w)}</div>`).join('')}</details></div>`;
+  return h;
+}
+
+function tryResult(text) {
+  if (!text) return '';
+  if (!parseText) return '載入中…';
+  const p = parseText(text, new Date(), state.custom);
+  if (p.kind === 'undo') return '↩️ 會刪除上一筆紀錄';
+  if (p.kind === 'query') return '❓ 會回答問題（' + (p.what === 'summary' ? '今天狀況' : '上次' + p.type) + '），不會記錄';
+  if (p.kind !== 'add') return '';
+  const r = p.rec;
+  let s = ic(r.type) + ' ' + esc(p.wake ? '起床（結束睡眠）' : r.type === '睡眠' && r.value == null ? '開始睡覺' : summaryOf(r));
+  s += '<small>時間 ' + hm(r.t) + (p.custom ? '・用了自訂說法「' + esc(p.custom) + '」' : '') + (p.unsure ? '・聽不懂，會存成備註' : '') + '</small>';
+  return s;
+}
+
+function stepsBlock(id, name, fixed) {
+  if (id === 'main' && siriUI.open !== 'main') return `<button class="tbl-toggle" data-sact="main-steps">📋 看捷徑做法（已帶入你的網址和密碼）</button>`;
+  const url = LS.get('url', ''), key = LS.get('key', ''), by = LS.get('by', '');
+  const cp = (v, label) => v ? `<button class="mini cp" data-copy="${esc(v)}">複製${label}</button>` : `<span class="warn">（先到「設定」填${label}）</span>`;
+  const s = [];
+  s.push(`打開「捷徑」App，按右上角 <b>＋</b>　<a class="mini" href="shortcuts://">打開捷徑 App</a>`);
+  s.push(`點最上面的「新捷徑」→「<b>重新命名</b>」→ 輸入「<b>${esc(name)}</b>」${cp(name, '名稱')}`);
+  if (fixed) s.push(`點「<b>搜尋動作</b>」→ 輸入「文字」→ 點「<b>文字</b>」，在框裡打「<b>${esc(fixed)}</b>」${cp(fixed, '內容')}`);
+  else s.push(`點「<b>搜尋動作</b>」→ 輸入「聽寫」→ 點「<b>聽寫文字</b>」。點動作右邊的 ⌄ 展開：語言選「<b>中文（台灣）</b>」，「停止聆聽」選「<b>暫停後</b>」`);
+  s.push(`下方搜尋列輸入「URL」→ 點「<b>取得 URL 內容</b>」。點藍色的「URL」字樣，貼上網址 ${cp(url, '網址')}`);
+  s.push(`點這個動作右邊的 ⌄ 展開：「<b>方法</b>」改成 <b>POST</b>，「<b>要求本文</b>」選 <b>JSON</b>`);
+  s.push(`點「<b>新增新欄位</b>」→「<b>文字</b>」：「鍵」打 <code>key</code>，「文字」貼上密碼 ${cp(key, '密碼')}`);
+  s.push(`再點「新增新欄位」→「文字」：「鍵」打 <code>text</code>，「文字」那格點一下，鍵盤上方選藍色變數「<b>${fixed ? '文字' : '聽寫的文字'}</b>」`);
+  s.push(`再點「新增新欄位」→「文字」：「鍵」打 <code>plain</code>，「文字」打 <code>1</code>`);
+  if (by) s.push(`再點「新增新欄位」→「文字」：「鍵」打 <code>by</code>，「文字」打 <code>${esc(by)}</code>（App 會顯示是誰記的）`);
+  s.push(`下方搜尋列輸入「說出」→ 點「<b>說出文字</b>」（內容會自動是「URL 的內容」，Siri 會唸出結果）`);
+  s.push(`按右上角「<b>完成</b>」。試試看：說「<b>嘿 Siri，${esc(name)}</b>」${fixed ? '' : '，聽到嗶聲說「喝奶一百二」'}`);
+  return `<ol class="steps">${s.map(x => '<li>' + x + '</li>').join('')}</ol>`;
+}
+
+function openCustomForm(i) {
+  const c = i != null ? state.custom[i] : { w: '', type: '喝奶', value: null, detail: '' };
+  openSheet(`<h3><span class="e" data-c="bf">🗣️</span>${i != null ? '修改' : '新增'}說法<button class="x" data-act="close">✕</button></h3>
+    <div class="fld"><label>聽到這個說法</label><input id="cW" value="${esc(c.w)}" placeholder="例如：ㄋㄟㄋㄟ、臭臭、一瓶"></div>
+    <div class="fld"><label>就記成</label><select id="cT">${SIRI_TYPES.map(t => `<option ${t === c.type ? 'selected' : ''} value="${t}">${t === '起床' ? '🌞 起床（結束睡眠）' : t === '取消' ? '↩️ 取消上一筆' : ic(t) + ' ' + t}</option>`).join('')}</select></div>
+    <div class="fld"><label>預設數量（可不填；話裡有說數字就用說的）</label><input id="cV" inputmode="decimal" value="${c.value != null ? c.value : ''}" placeholder="例如 160"></div>
+    <div class="fld"><label>自動加上的細節（可不填）</label><input id="cD" value="${esc(c.detail || '')}" placeholder="例如：配方奶、黃 軟"></div>
+    <div class="btns">${i != null ? `<button class="btn danger" data-sact="c-del" data-i="${i}">刪除</button>` : ''}<button class="btn" data-sact="c-save" data-i="${i != null ? i : ''}">儲存</button></div>`);
+}
+
+function openQuickForm(i) {
+  const q = i != null ? siriQuick()[i] : { name: '', text: '' };
+  openSheet(`<h3><span class="e" data-c="sleep">⚡</span>${i != null ? '修改' : '新增'}一句話捷徑<button class="x" data-act="close">✕</button></h3>
+    <div class="fld"><label>對 Siri 說「嘿 Siri，＿＿」</label><input id="qN" value="${esc(q.name)}" placeholder="例如：換尿布"></div>
+    <div class="fld"><label>就記成（寫法跟對 Siri 說的話一樣）</label><input id="qT" value="${esc(q.text)}" placeholder="例如：尿布、睡覺、起床、喝奶一百二"></div>
+    <div id="qTry" class="try-out">${tryResult(q.text)}</div>
+    <div class="note" style="margin-bottom:14px">儲存後，記得到捷徑 App 照「做法」做一個同名的捷徑。</div>
+    <div class="btns">${i != null ? `<button class="btn danger" data-sact="q-del" data-i="${i}">刪除</button>` : ''}<button class="btn" data-sact="q-save" data-i="${i != null ? i : ''}">儲存</button></div>`);
+}
+
+async function saveCustom(list) {
+  const old = state.custom;
+  state.custom = list; render();
+  try {
+    const j = await api({ action: 'custom', list: list });
+    state.custom = j.custom || list;
+    if (!state.demo) LS.set('custom', state.custom); else LS.set('demo-custom', state.custom);
+    toast('已儲存，兩支手機都會套用');
+  } catch (e) { state.custom = old; toast('沒有存到：' + e.message); }
+  render();
+}
+async function saveSiriSettings(set) {
+  try {
+    const j = await api({ action: 'settings', set: set });
+    state.settings = j.settings;
+    if (!state.demo) LS.set('settings', state.settings);
+    toast('已儲存');
+  } catch (e) { toast('沒有存到：' + e.message); }
+  render();
+}
+
+document.addEventListener('click', async e => {
+  const b = e.target.closest('[data-sact], [data-copy]'); if (!b) return;
+  if (b.dataset.copy != null) {
+    try { await navigator.clipboard.writeText(b.dataset.copy); toast('✓ 已複製'); }
+    catch (err) { prompt('請長按複製', b.dataset.copy); }
+    return;
+  }
+  const a = b.dataset.sact, i = b.dataset.i === '' || b.dataset.i == null ? null : +b.dataset.i;
+  const need = () => { if (!connected()) { toast('先到「設定」連上試算表，或開示範模式'); return false; } return true; };
+  const shut = () => { $('#sheet').hidden = true; $('#sheetBg').hidden = true; };
+  switch (a) {
+    case 'main-steps': siriUI.open = siriUI.open === 'main' ? null : 'main'; render(); break;
+    case 'q-steps': siriUI.open = siriUI.open === 'q' + i ? null : 'q' + i; render(); break;
+    case 'save-name': {
+      if (!need()) break;
+      const v = $('#siName').value.trim();
+      if (!v) { toast('名稱不能空白'); break; }
+      saveSiriSettings({ 'Siri名稱': v }); break;
+    }
+    case 'q-add': openQuickForm(null); break;
+    case 'q-edit': openQuickForm(i); break;
+    case 'q-save': case 'q-del': {
+      if (!need()) break;
+      const list = siriQuick().slice();
+      if (a === 'q-del') list.splice(i, 1);
+      else {
+        const q = { name: $('#qN').value.trim(), text: $('#qT').value.trim() };
+        if (!q.name || !q.text) { toast('兩格都要填'); break; }
+        if (i != null) list[i] = q; else list.push(q);
+      }
+      shut(); saveSiriSettings({ 'Siri快捷': JSON.stringify(list) }); break;
+    }
+    case 'c-add': openCustomForm(null); break;
+    case 'c-edit': openCustomForm(i); break;
+    case 'c-save': case 'c-del': {
+      if (!need()) break;
+      const list = state.custom.slice();
+      if (a === 'c-del') { if (!confirm('刪除說法「' + list[i].w + '」？')) break; list.splice(i, 1); }
+      else {
+        const v = $('#cV').value.trim();
+        const c = { w: $('#cW').value.trim(), type: $('#cT').value, value: v === '' ? null : Number(v), detail: $('#cD').value.trim() };
+        if (!c.w) { toast('請填說法'); break; }
+        if (c.value != null && isNaN(c.value)) { toast('數量要填數字'); break; }
+        if (list.some((x, j) => x.w === c.w && j !== i)) { toast('這個說法已經有了'); break; }
+        if (i != null) list[i] = c; else list.push(c);
+      }
+      shut(); saveCustom(list); break;
+    }
+  }
+});
+document.addEventListener('input', e => { if (e.target.id === 'qT') $('#qTry').innerHTML = tryResult(e.target.value.trim()); });
+document.addEventListener('submit', e => {
+  if (e.target.dataset.form !== 'try') return;
+  e.preventDefault();
+  siriUI.test = $('#siTry').value.trim();
+  $('#siTryOut').innerHTML = tryResult(siriUI.test);
+});
+
+const DEMO_CUSTOM = [{ w: 'ㄋㄟㄋㄟ', type: '喝奶', value: null, detail: '' }, { w: '臭臭', type: '大便', value: null, detail: '' }, { w: '一瓶', type: '喝奶', value: 160, detail: '配方奶' }];
 
 /* ───── 表單 ───── */
 function openSheet(html) {
@@ -629,7 +827,7 @@ async function toggleSleep() {
 
 async function sayText(text) {
   if (!parseText) { toast('還在載入，請稍等一下'); return; }
-  const p = parseText(text, new Date());
+  const p = parseText(text, new Date(), state.custom);
   if (p.kind === 'empty') return;
   if (p.kind === 'undo') {
     const last = state.recs[state.recs.length - 1];
@@ -719,8 +917,8 @@ document.addEventListener('click', async e => {
       catch (err) { toast('沒有存到：' + err.message); }
       break;
     }
-    case 'demo-on': state.demo = true; LS.set('demo', true); state.recs = LS.get('demo-recs', null) || demoData(); state.settings = { '寶寶名字': '示範寶寶', '生日': dayKey(Date.now() - 52 * 86400000) }; LS.set('demo-recs', state.recs); render(); toast('示範模式：假資料只存在這支手機'); break;
-    case 'demo-off': state.demo = false; LS.set('demo', false); state.recs = LS.get('cache', []); state.settings = LS.get('settings', {}); render(); sync(true); break;
+    case 'demo-on': state.demo = true; LS.set('demo', true); state.custom = LS.get('demo-custom', null) || DEMO_CUSTOM; state.recs = LS.get('demo-recs', null) || demoData(); state.settings = { '寶寶名字': '示範寶寶', '生日': dayKey(Date.now() - 52 * 86400000) }; LS.set('demo-recs', state.recs); render(); toast('示範模式：假資料只存在這支手機'); break;
+    case 'demo-off': state.demo = false; LS.set('demo', false); state.custom = LS.get('custom', []); state.recs = LS.get('cache', []); state.settings = LS.get('settings', {}); render(); sync(true); break;
     case 'more-days': state.logDays += 14; render(); break;
     case 'csv': exportCsv(); break;
   }
@@ -754,8 +952,9 @@ function exportCsv() {
 let demoSeq = 0;
 function demoApi(b) {
   const r = state.recs;
-  if (b.action === 'list') return Promise.resolve({ ok: true, records: r, settings: state.settings });
+  if (b.action === 'list') return Promise.resolve({ ok: true, records: r, settings: state.settings, custom: state.custom });
   if (b.action === 'add') return Promise.resolve({ ok: true, rec: Object.assign({ id: 'd' + Date.now() + (demoSeq++), value: null, unit: '', detail: '', end: null, by: b.by || '' }, b.rec) });
+  if (b.action === 'custom') { state.custom = b.list; return Promise.resolve({ ok: true, custom: b.list }); }
   if (b.action === 'settings') { state.settings = Object.assign({}, state.settings, b.set); return Promise.resolve({ ok: true, settings: state.settings }); }
   return Promise.resolve({ ok: true });
 }
@@ -789,7 +988,7 @@ function demoData() {
 }
 
 /* ───── 開始 ───── */
-if (state.demo) { state.recs = LS.get('demo-recs', null) || demoData(); state.settings = { '寶寶名字': '示範寶寶', '生日': dayKey(Date.now() - 52 * 86400000) }; }
+if (state.demo) { state.custom = LS.get('demo-custom', null) || DEMO_CUSTOM; state.recs = LS.get('demo-recs', null) || demoData(); state.settings = { '寶寶名字': '示範寶寶', '生日': dayKey(Date.now() - 52 * 86400000) }; }
 render();
 sync(true);
 if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});

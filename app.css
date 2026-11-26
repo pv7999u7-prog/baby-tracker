@@ -287,3 +287,28 @@ table.data th { color: var(--ink-2); font-weight: 400; }
 .banner b { display: block; margin-bottom: 4px; font-size: 17px; }
 .banner .btns { margin-top: 12px; }
 .banner .btn { padding: 11px; font-size: 15px; }
+
+/* ── Siri 語音設定 ── */
+.back-btn { border: 0; background: none; color: var(--accent); font-weight: 700; font-size: 16px; padding: 8px 4px 0; }
+.note { font-size: 14px; color: var(--ink-2); background: var(--poop-bg); border-radius: 14px; padding: 9px 12px; margin: 10px 0 12px; }
+.qlist { margin: 4px 0 10px; }
+.qrow { display: flex; align-items: center; gap: 8px; width: 100%; border: 0; background: var(--card-2); border-radius: 16px; padding: 10px 12px; margin-bottom: 8px; text-align: left; }
+.qm { flex: 1; min-width: 0; }
+.qm b { display: block; }
+.qm span { font-size: 13.5px; color: var(--ink-2); }
+.chev { color: var(--ink-3); font-size: 22px; }
+.mini { display: inline-block; border: 2px solid var(--edge); background: var(--card); color: var(--accent); border-radius: 999px; padding: 3px 11px; font-size: 13px; font-weight: 700; text-decoration: none; white-space: nowrap; vertical-align: middle; }
+.mini.cp { margin-left: 6px; }
+.warn { color: var(--critical); font-size: 13px; }
+ol.steps { margin: 10px 0 4px; padding-left: 0; list-style: none; counter-reset: st; }
+ol.steps li { counter-increment: st; position: relative; padding: 8px 0 8px 38px; border-bottom: 2px dotted var(--line); font-size: 15px; line-height: 1.7; }
+ol.steps li:last-child { border-bottom: 0; }
+ol.steps li::before { content: counter(st); position: absolute; left: 0; top: 8px; width: 26px; height: 26px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); font-weight: 700; font-size: 14px; display: grid; place-items: center; }
+code { background: var(--card-2); border-radius: 6px; padding: 1px 6px; font-family: ui-monospace, Menlo, monospace; font-size: 14px; }
+.try-out:not(:empty) { margin-top: 10px; background: var(--milk-bg); border-radius: 14px; padding: 10px 12px; font-weight: 700; }
+.try-out small { display: block; font-weight: 400; font-size: 13px; color: var(--ink-2); }
+details summary { cursor: pointer; color: var(--accent); font-weight: 700; }
+.bi { padding: 8px 0; border-bottom: 2px dotted var(--line); font-size: 14px; color: var(--ink-2); }
+.bi b { display: block; color: var(--ink); font-size: 15px; }
+select { appearance: none; -webkit-appearance: none; }
+a.btn { text-decoration: none; text-align: center; display: flex; align-items: center; justify-content: center; }

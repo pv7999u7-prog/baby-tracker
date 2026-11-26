@@ -1,6 +1,6 @@
 // 寶寶日記 service worker：程式檔離線可開，資料一律走網路
-const CACHE = 'bb-v1';
-const FILES = ['./', 'index.html', 'app.css?v=1', 'app.js?v=1', 'apps-script/Code.gs?v=1', 'setup.html', 'manifest.webmanifest', 'icon-180.png'];
+const CACHE = 'bb-v2';
+const FILES = ['./', 'index.html', 'app.css?v=2', 'app.js?v=2', 'apps-script/Code.gs?v=2', 'setup.html', 'manifest.webmanifest', 'icon-180.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', e => {
